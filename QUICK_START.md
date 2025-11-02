@@ -96,7 +96,25 @@ You should see: "Database initialization completed" ✅
 
 ## Step 6: Run the Application 🎉
 
-### Option A: Run Everything Together (EASIEST!)
+### Option A: Quick Start Script (SUPER EASY!) 🚀
+
+**On Mac/Linux:**
+```bash
+./start.sh
+```
+
+**On Windows:**
+```bash
+start.bat
+```
+
+This script automatically:
+- ✅ Creates `.env` if missing
+- ✅ Installs dependencies
+- ✅ Sets up database
+- ✅ Starts both servers!
+
+### Option B: Manual Run
 
 In **Terminal** from the project root:
 ```bash
@@ -105,7 +123,7 @@ npm run dev
 
 This starts both frontend and backend automatically!
 
-### Option B: Run Separately (if Option A doesn't work)
+### Option C: Run Separately (if above don't work)
 
 **Terminal 1 - Backend:**
 ```bash
