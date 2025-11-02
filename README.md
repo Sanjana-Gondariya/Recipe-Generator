@@ -61,7 +61,13 @@ An innovative application designed to help users reduce food waste by efficientl
 - JWT Authentication
 - OpenAI API integration
 
+## Quick Start 🚀
+
+**New to the project?** Check out **[QUICK_START.md](QUICK_START.md)** for step-by-step VS Code setup instructions!
+
 ## Installation
+
+For detailed setup instructions, see [SETUP.md](SETUP.md)
 
 1. Clone the repository
 2. Install dependencies:
@@ -86,7 +92,7 @@ npm run dev
 
 The application will be available at:
 - Frontend: http://localhost:3000
-- Backend: http://localhost:5000
+- Backend: http://localhost:5001
 
 ## Project Structure
 
