@@ -42,3 +42,8 @@ yarn-error.log*
 tmp/
 temp/
 
+# Zip files
+*.zip
+
+# Large data files
+backend/data/RAW_recipes.csv
