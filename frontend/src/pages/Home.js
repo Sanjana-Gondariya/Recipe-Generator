@@ -36,11 +36,6 @@ function Home() {
               <h3>Recipe Collection</h3>
               <p>Browse from thousands of recipes</p>
             </Link>
-            <Link to="/substitutions" className="feature-card">
-              <div className="feature-icon">🔄</div>
-              <h3>Substitutions</h3>
-              <p>Find ingredient alternatives on the fly</p>
-            </Link>
             <Link to="/search?quick=true" className="feature-card">
               <div className="feature-icon">⏱️</div>
               <h3>Quick Meals</h3>

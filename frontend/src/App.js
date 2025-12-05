@@ -7,7 +7,6 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import RecipeSearch from './pages/RecipeSearch';
 import RecipeDetail from './pages/RecipeDetail';
-import Substitutions from './pages/Substitutions';
 import Bookmarks from './pages/Bookmarks';
 import Recommendations from './pages/Recommendations';
 import Ingredients from './pages/Ingredients';
@@ -24,7 +23,6 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/search" element={<RecipeSearch />} />
       <Route path="/recipe/:id" element={<RecipeDetail />} />
-      <Route path="/substitutions" element={<Substitutions />} />
       <Route path="/bookmarks" element={<Bookmarks />} />
       <Route path="/recommendations" element={<Recommendations />} />
       <Route path="/ingredients" element={<Ingredients />} />

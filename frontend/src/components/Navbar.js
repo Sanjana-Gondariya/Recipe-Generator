@@ -30,7 +30,6 @@ function Navbar() {
               <Link to="/recommendations" className="navbar-link">Recommendations</Link>
             </>
           )}
-          <Link to="/substitutions" className="navbar-link">Substitutions</Link>
           {user ? (
             <button onClick={handleLogout} className="navbar-link navbar-button">
               Logout

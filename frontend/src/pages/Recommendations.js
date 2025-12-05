@@ -43,8 +43,8 @@ function Recommendations() {
     <div className="recommendations-page">
       <div className="container">
         <div className="page-header">
-          <h1>AI Recommendations</h1>
-          <p>Personalized recipe suggestions based on your preferences</p>
+          <h1>Recommendations</h1>
+          <p>Personalized recipe suggestions based on your bookmarked recipes</p>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
@@ -57,7 +57,7 @@ function Recommendations() {
 
         {recommendations.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🤖</div>
+            <div className="empty-icon">🔖</div>
             <h2>No recommendations yet</h2>
             <p>Start bookmarking recipes to get personalized suggestions!</p>
             <Link to="/search" className="btn btn-primary">

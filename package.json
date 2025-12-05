@@ -1,7 +1,7 @@
 {
   "name": "food-waste-saver",
   "version": "1.0.0",
-  "description": "Food waste reduction application with AI-powered recipe recommendations",
+  "description": "Food waste reduction application with recipe recommendations",
   "main": "backend/server.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",

@@ -1,15 +1,5 @@
 import excelStorage from '../models/excelStorage.js';
 import recipeData from '../models/recipes.js';
-import OpenAI from 'openai';
-
-const getOpenAI = () => {
-  if (!process.env.OPENAI_API_KEY) {
-    return null;
-  }
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-  });
-};
 
 class RecommendationController {
   async getRecommendations(req, res) {
@@ -19,10 +9,7 @@ class RecommendationController {
       // Get user's bookmarked recipes
       const bookmarks = await excelStorage.getBookmarks(userId);
 
-      // Get user preferences
-      const preferences = await excelStorage.getUserPreferences(userId) || {};
-
-      // If no bookmarks, return error or suggest popular recipes
+      // If no bookmarks, return popular recipes
       if (bookmarks.length === 0) {
         const allRecipes = recipeData.getAllRecipes();
         const popularRecipes = allRecipes.slice(0, 5).map(recipe => ({
@@ -38,106 +25,78 @@ class RecommendationController {
         });
       }
 
-      // Enrich bookmarks with recipe data
+      // Get bookmarked recipes and find similar recipes
       const bookmarkedRecipes = bookmarks.map(bookmark => {
         const recipe = recipeData.getRecipeById(bookmark.recipe_id);
-        return recipe ? {
-          title: recipe.name,
-          name: recipe.name,
-          cuisine_type: recipe.tags ? recipe.tags.join(', ') : '',
-          dietary_tags: recipe.tags || [],
-          ingredients: recipe.ingredients || []
-        } : null;
+        return recipe;
       }).filter(Boolean);
 
-      // Prepare context for AI
-      const recipeSummaries = bookmarkedRecipes.map(r => ({
-        title: r.title,
-        cuisine: r.cuisine_type,
-        dietary: r.dietary_tags,
-        ingredients: r.ingredients
-      }));
+      // Get all recipes and find similar ones based on shared ingredients
+      const allRecipes = recipeData.getAllRecipes();
+      const recommendations = [];
+      const bookmarkedIds = new Set(bookmarks.map(b => b.recipe_id.toString()));
 
-      const openai = getOpenAI();
-      
-      // If OpenAI is not configured, return fallback recommendations
-      if (!openai) {
-        const fallbackRecipes = bookmarkedRecipes.slice(0, 5).map(r => {
-          const recipe = recipeData.getRecipeById(r.id || r.title);
-          return recipe ? {
+      // Find recipes with similar ingredients to bookmarked recipes
+      for (const bookmarkedRecipe of bookmarkedRecipes) {
+        if (!bookmarkedRecipe.ingredients || bookmarkedRecipe.ingredients.length === 0) continue;
+
+        const bookmarkedIngs = new Set(
+          bookmarkedRecipe.ingredients.map(ing => ing.toLowerCase().trim())
+        );
+
+        for (const recipe of allRecipes) {
+          // Skip if already bookmarked
+          if (bookmarkedIds.has(recipe.id.toString())) continue;
+          
+          // Skip if already in recommendations
+          if (recommendations.some(r => r.id === recipe.id)) continue;
+
+          if (recipe.ingredients && recipe.ingredients.length > 0) {
+            const recipeIngs = new Set(
+              recipe.ingredients.map(ing => ing.toLowerCase().trim())
+            );
+            
+            // Count shared ingredients
+            const sharedIngredients = [...bookmarkedIngs].filter(ing => recipeIngs.has(ing));
+            
+            // If at least 2 ingredients match, recommend it
+            if (sharedIngredients.length >= 2) {
+              recommendations.push({
+                id: recipe.id,
+                title: recipe.name,
+                description: recipe.description,
+                recommended_ingredients: recipe.ingredients,
+                cooking_time: recipe.minutes,
+                reason_for_recommendation: `Similar to "${bookmarkedRecipe.name}" (shares ${sharedIngredients.length} ingredients)`
+              });
+            }
+          }
+        }
+      }
+
+      // If we don't have enough recommendations, add some popular recipes
+      if (recommendations.length < 5) {
+        const popularRecipes = allRecipes
+          .filter(r => !bookmarkedIds.has(r.id.toString()) && !recommendations.some(rec => rec.id === r.id))
+          .slice(0, 5 - recommendations.length)
+          .map(recipe => ({
+            id: recipe.id,
             title: recipe.name,
             description: recipe.description,
             recommended_ingredients: recipe.ingredients,
             cooking_time: recipe.minutes,
-            reason_for_recommendation: 'Similar to your bookmarked recipes'
-          } : null;
-        }).filter(Boolean);
-        
-        return res.json({
-          message: 'AI recommendations require OpenAI API key. Showing similar recipes.',
-          recommendations: fallbackRecipes
-        });
+            reason_for_recommendation: 'Popular recipe from our collection'
+          }));
+        recommendations.push(...popularRecipes);
       }
-
-      const aiPrompt = `Based on these bookmarked recipes, suggest 5 similar recipes that the user might enjoy:
-
-Bookmarked recipes:
-${JSON.stringify(recipeSummaries, null, 2)}
-
-User preferences:
-Dietary restrictions: ${preferences.dietary_restrictions || 'None'}
-Allergies: ${preferences.allergies || 'None'}
-Cuisine preferences: ${preferences.cuisine_preferences || 'Any'}
-Goals: ${preferences.goals || 'None'}
-
-Return a JSON array with recipe suggestions. Each suggestion should have: title, description, recommended_ingredients (array), cooking_time (minutes), and reason_for_recommendation.`;
-
-      // Call OpenAI API
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful recipe recommendation assistant. Always return valid JSON arrays."
-          },
-          {
-            role: "user",
-            content: aiPrompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000
-      });
-
-      const aiRecommendations = JSON.parse(completion.choices[0].message.content);
 
       res.json({
         based_on: bookmarkedRecipes.length,
-        recommendations: aiRecommendations
+        recommendations: recommendations.slice(0, 10)
       });
     } catch (error) {
       console.error('Get recommendations error:', error);
-      
-      // Fallback to bookmarked recipes if AI fails
-      try {
-        const bookmarks = await excelStorage.getBookmarks(req.user.userId);
-        const fallbackRecipes = bookmarks.slice(0, 5).map(bookmark => {
-          const recipe = recipeData.getRecipeById(bookmark.recipe_id);
-          return recipe ? {
-            title: recipe.name,
-            description: recipe.description,
-            recommended_ingredients: recipe.ingredients,
-            cooking_time: recipe.minutes
-          } : null;
-        }).filter(Boolean);
-
-        res.json({
-          message: 'AI recommendations temporarily unavailable, showing bookmarked recipes',
-          recommendations: fallbackRecipes
-        });
-      } catch (fallbackError) {
-        res.status(500).json({ error: 'Failed to get recommendations' });
-      }
+      res.status(500).json({ error: 'Failed to get recommendations' });
     }
   }
 }

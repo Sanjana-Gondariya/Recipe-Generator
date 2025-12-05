@@ -17,7 +17,6 @@ function RecipeSearch() {
   });
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [generatingAI, setGeneratingAI] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
@@ -46,47 +45,6 @@ function RecipeSearch() {
     if (savedIngredients.length > 0) {
       setIngredients(savedIngredients.join(', '));
       setUseOnlySaved(true);
-    }
-  };
-
-  const handleGenerateAIRecipe = async () => {
-    if (!user) {
-      alert('Please login to generate AI recipes');
-      return;
-    }
-
-    if (savedIngredients.length === 0) {
-      alert('Please add ingredients first');
-      return;
-    }
-
-    setError('');
-    setGeneratingAI(true);
-    setHasSearched(true);
-
-    try {
-      const response = await api.post('/ai-recipes/generate', {
-        useOnlySaved: useOnlySaved,
-        additionalIngredients: ingredients
-      });
-
-      if (response.data && response.data.recipes) {
-        setRecipes(response.data.recipes || []);
-        if (response.data.ingredients_used) {
-          setInfo(`Generated recipes using: ${response.data.ingredients_used.join(', ')}`);
-          setError('');
-        }
-      } else {
-        setError('No recipes generated');
-        setRecipes([]);
-      }
-    } catch (err) {
-      const errorMessage = err.response?.data?.error || err.response?.data?.details || err.message || 'Failed to generate AI recipes';
-      setError(errorMessage);
-      setRecipes([]);
-      console.error('AI generation error:', err.response?.data || err);
-    } finally {
-      setGeneratingAI(false);
     }
   };
 
@@ -186,7 +144,7 @@ function RecipeSearch() {
                 </button>
               )}
             </div>
-            <button type="submit" className="btn btn-primary btn-lg" disabled={loading || generatingAI}>
+            <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
               {loading ? 'Searching...' : 'Search Recipes'}
             </button>
           </div>
@@ -206,16 +164,6 @@ function RecipeSearch() {
                 />
                 <span style={{ fontSize: '0.9rem' }}>Use only saved ingredients</span>
               </label>
-              
-              <button
-                type="button"
-                onClick={handleGenerateAIRecipe}
-                className="btn btn-secondary"
-                disabled={generatingAI || loading || savedIngredients.length === 0}
-                style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
-              >
-                {generatingAI ? 'Generating...' : '🤖 Generate AI Recipes'}
-              </button>
               
               <Link to="/ingredients" style={{ color: '#667eea', textDecoration: 'none', fontSize: '0.9rem' }}>
                 Manage ({savedIngredients.length})
@@ -265,14 +213,14 @@ function RecipeSearch() {
         {error && <div className="alert alert-error">{error}</div>}
         {info && <div className="alert alert-info" style={{ background: '#e3f2fd', color: '#1976d2', border: '1px solid #90caf9' }}>{info}</div>}
 
-        {(loading || generatingAI) && (
+        {loading && (
           <div className="loading-spinner">
             <div className="spinner"></div>
-            <p>{generatingAI ? 'AI is creating delicious recipes for you...' : 'Finding delicious recipes for you...'}</p>
+            <p>Finding delicious recipes for you...</p>
           </div>
         )}
 
-        {!loading && !generatingAI && hasSearched && (
+        {!loading && hasSearched && (
           <div className="results-section">
             <h2>
               {recipes.length > 0
@@ -287,20 +235,8 @@ function RecipeSearch() {
                     key={recipe.id} 
                     to={`/recipe/${recipe.id}`} 
                     className="recipe-card"
-                    state={{ recipe, isAIGenerated: recipe.source === 'ai-generated' }}
                   >
                     <div className="recipe-content">
-                      {recipe.source === 'ai-generated' && (
-                        <span style={{ 
-                          background: '#667eea', 
-                          color: 'white', 
-                          padding: '0.2rem 0.5rem', 
-                          borderRadius: '4px', 
-                          fontSize: '0.75rem',
-                          display: 'inline-block',
-                          marginBottom: '0.5rem'
-                        }}>🤖 AI Generated</span>
-                      )}
                       <h3>{recipe.name || recipe.title}</h3>
                       {recipe.description && <p className="recipe-description">{recipe.description}</p>}
                       <div className="recipe-meta">

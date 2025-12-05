@@ -21,24 +21,70 @@ class RecipeData {
       const results = [];
       
       const csvPath = path.join(__dirname, '../data/RAW_recipes.csv');
+      
+      // Check if file exists
+      if (!fs.existsSync(csvPath)) {
+        console.warn(`Recipe CSV file not found at ${csvPath}. Starting with empty recipe list.`);
+        this.recipes = [];
+        this.loaded = true;
+        resolve();
+        return;
+      }
+
       fs.createReadStream(csvPath)
         .pipe(csv())
         .on('data', (row) => {
           try {
-            // Parse the string arrays from CSV
-            const recipe = {
-              id: parseInt(row.id),
-              name: row.name,
-              minutes: parseInt(row.minutes) || 0,
-              n_steps: parseInt(row.n_steps) || 0,
-              steps: this.parseArray(row.steps),
-              description: row.description || '',
-              ingredients: this.parseArray(row.ingredients),
-              n_ingredients: parseInt(row.n_ingredients) || 0,
-              tags: this.parseArray(row.tags),
-              nutrition: this.parseArray(row.nutrition)
-            };
-            results.push(recipe);
+            let recipe;
+            
+            // Check if this is the archive format (has recipe_name) or original format (has name/id)
+            if (row.recipe_name || row.Name) {
+              // Archive format: recipe_name, total_time, ingredients (comma-separated), directions
+              const recipeName = row.recipe_name || row.Name || '';
+              const totalTime = row.total_time || row['Total Time'] || '';
+              const ingredientsStr = row.ingredients || '';
+              const directionsStr = row.directions || row.Directions || '';
+              
+              // Parse time string (e.g., "1 hrs 30 mins" or "40 mins") to minutes
+              const minutes = this.parseTimeToMinutes(totalTime);
+              
+              // Parse ingredients from comma-separated string to array
+              const ingredients = this.parseIngredientsString(ingredientsStr);
+              
+              // Parse directions to steps array
+              const steps = this.parseDirectionsToSteps(directionsStr);
+              
+              recipe = {
+                id: results.length + 1, // Generate ID from index
+                name: recipeName,
+                minutes: minutes,
+                n_steps: steps.length,
+                steps: steps,
+                description: row.description || '',
+                ingredients: ingredients,
+                n_ingredients: ingredients.length,
+                tags: [],
+                nutrition: []
+              };
+            } else {
+              // Original format: id, name, minutes, steps, ingredients (as arrays)
+              recipe = {
+                id: parseInt(row.id) || results.length + 1,
+                name: row.name || '',
+                minutes: parseInt(row.minutes) || 0,
+                n_steps: parseInt(row.n_steps) || 0,
+                steps: this.parseArray(row.steps),
+                description: row.description || '',
+                ingredients: this.parseArray(row.ingredients),
+                n_ingredients: parseInt(row.n_ingredients) || 0,
+                tags: this.parseArray(row.tags),
+                nutrition: this.parseArray(row.nutrition)
+              };
+            }
+            
+            if (recipe.name && recipe.ingredients && recipe.ingredients.length > 0) {
+              results.push(recipe);
+            }
           } catch (error) {
             console.error('Error parsing recipe:', error);
           }
@@ -51,18 +97,114 @@ class RecipeData {
         })
         .on('error', (error) => {
           console.error('Error loading recipes:', error);
-          reject(error);
+          // Don't reject - just start with empty recipes
+          console.warn('Starting server with empty recipe list due to loading error');
+          this.recipes = [];
+          this.loaded = true;
+          resolve();
         });
     });
   }
 
   parseArray(str) {
+    if (!str) return [];
     try {
       // Parse arrays like "['item1', 'item2']"
       return JSON.parse(str.replace(/'/g, '"'));
     } catch (error) {
       return [];
     }
+  }
+
+  parseTimeToMinutes(timeStr) {
+    if (!timeStr) return 0;
+    let totalMinutes = 0;
+    
+    // Match hours: "1 hrs" or "1 hr"
+    const hoursMatch = timeStr.match(/(\d+)\s*(?:hrs?|hours?)/i);
+    if (hoursMatch) {
+      totalMinutes += parseInt(hoursMatch[1]) * 60;
+    }
+    
+    // Match minutes: "30 mins" or "30 min"
+    const minsMatch = timeStr.match(/(\d+)\s*(?:mins?|minutes?)/i);
+    if (minsMatch) {
+      totalMinutes += parseInt(minsMatch[1]);
+    }
+    
+    return totalMinutes || 0;
+  }
+
+  parseIngredientsString(ingredientsStr) {
+    if (!ingredientsStr) return [];
+    
+    // Try to parse as JSON array first (for test_recipes.csv format)
+    try {
+      const parsed = JSON.parse(ingredientsStr);
+      if (Array.isArray(parsed)) {
+        // Extract ingredient names from objects like {quantity: '2', unit: 'cups', name: 'flour'}
+        return parsed.map(item => {
+          if (typeof item === 'string') return item;
+          if (item.name) return item.name;
+          return JSON.stringify(item);
+        });
+      }
+    } catch (e) {
+      // Not JSON, parse as comma-separated string
+    }
+    
+    // Parse comma-separated ingredients string
+    // Split by commas, but be careful with commas inside parentheses
+    const ingredients = [];
+    let current = '';
+    let depth = 0;
+    
+    for (let i = 0; i < ingredientsStr.length; i++) {
+      const char = ingredientsStr[i];
+      if (char === '(' || char === '[') depth++;
+      else if (char === ')' || char === ']') depth--;
+      else if (char === ',' && depth === 0) {
+        const trimmed = current.trim();
+        if (trimmed) ingredients.push(trimmed);
+        current = '';
+        continue;
+      }
+      current += char;
+    }
+    
+    if (current.trim()) ingredients.push(current.trim());
+    
+    return ingredients.filter(ing => ing.length > 0);
+  }
+
+  parseDirectionsToSteps(directionsStr) {
+    if (!directionsStr) return [];
+    
+    // Try to parse as JSON array first
+    try {
+      const parsed = JSON.parse(directionsStr);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(step => typeof step === 'string' && step.trim().length > 0);
+      }
+    } catch (e) {
+      // Not JSON, parse as text
+    }
+    
+    // Split by periods followed by space or newline, or by numbered steps
+    // First try to split by numbered steps (1., 2., etc.)
+    const numberedMatch = directionsStr.match(/^\d+\./);
+    if (numberedMatch) {
+      const steps = directionsStr.split(/\d+\.\s*/).filter(s => s.trim().length > 0);
+      return steps.map(s => s.trim());
+    }
+    
+    // Otherwise split by periods followed by space/newline
+    const steps = directionsStr
+      .split(/\.\s+(?=[A-Z])|\.\n+/)
+      .map(s => s.trim().replace(/\.$/, ''))
+      .filter(s => s.length > 0);
+    
+    return steps.length > 0 ? steps : [directionsStr];
   }
 
   searchRecipes(filters = {}) {

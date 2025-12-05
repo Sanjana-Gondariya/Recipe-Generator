@@ -15,24 +15,11 @@ function RecipeDetail() {
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   useEffect(() => {
-    // Check if recipe was passed via location state (AI-generated recipes)
-    if (location.state?.recipe && location.state?.isAIGenerated) {
-      setRecipe(location.state.recipe);
-      setLoading(false);
-      if (user) {
-        checkBookmark();
-      }
-    } else if (id && id.startsWith('ai-generated')) {
-      // If it's an AI-generated ID but no state, show error
-      setError('AI-generated recipe not found. Please regenerate from search.');
-      setLoading(false);
-    } else {
-      fetchRecipe();
-      if (user) {
-        checkBookmark();
-      }
+    fetchRecipe();
+    if (user) {
+      checkBookmark();
     }
-  }, [id, user, location.state]);
+  }, [id, user]);
 
   const fetchRecipe = async () => {
     try {
@@ -46,12 +33,6 @@ function RecipeDetail() {
   };
 
   const checkBookmark = async () => {
-    // Skip bookmark check for AI-generated recipes
-    if (id && id.startsWith('ai-generated')) {
-      setIsBookmarked(false);
-      return;
-    }
-    
     try {
       const response = await api.get(`/bookmarks/check/${id}`);
       setIsBookmarked(response.data.isBookmarked);
@@ -64,12 +45,6 @@ function RecipeDetail() {
   const handleBookmark = async () => {
     if (!user) {
       alert('Please login to bookmark recipes');
-      return;
-    }
-
-    // AI-generated recipes can't be bookmarked (they don't exist in database)
-    if (id && id.startsWith('ai-generated')) {
-      alert('AI-generated recipes cannot be bookmarked. You can regenerate them anytime from your saved ingredients.');
       return;
     }
 
@@ -126,17 +101,6 @@ function RecipeDetail() {
                 </button>
               )}
             </div>
-            {recipe.source === 'ai-generated' && (
-              <span style={{ 
-                background: '#667eea', 
-                color: 'white', 
-                padding: '0.3rem 0.7rem', 
-                borderRadius: '6px', 
-                fontSize: '0.85rem',
-                display: 'inline-block',
-                marginBottom: '1rem'
-              }}>🤖 AI Generated Recipe</span>
-            )}
             <p className="recipe-description">{recipe.description}</p>
             <div className="recipe-meta">
               <span>⏱️ {recipe.minutes || recipe.cooking_time || 0} min</span>
