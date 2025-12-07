@@ -39,7 +39,6 @@ function Signup() {
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
-      console.error('Signup error:', err);
     } finally {
       setLoading(false);
     }

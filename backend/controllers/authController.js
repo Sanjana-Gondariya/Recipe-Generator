@@ -13,37 +13,23 @@ class AuthController {
       }
 
       // Check if user already exists
-      try {
-        const existingUser = await excelStorage.getUserByEmail(email);
-        if (existingUser) {
-          return res.status(409).json({ 
-            error: 'User with this email already exists',
-            message: 'An account with this email address already exists. Please login instead.'
-          });
-        }
-      } catch (checkError) {
-        console.error('Error checking existing user:', checkError);
-        // Continue with signup even if check fails (might be file read issue)
+      const existingUser = await excelStorage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ 
+          error: 'User with this email already exists',
+          message: 'An account with this email address already exists. Please login instead.'
+        });
       }
 
       // Hash password
       const passwordHash = await bcrypt.hash(password, 10);
 
       // Create user
-      let result;
-      try {
-        result = await excelStorage.createUser({
-          email,
-          password_hash: passwordHash,
-          username
-        });
-      } catch (createError) {
-        console.error('Error in createUser:', createError);
-        return res.status(500).json({ 
-          error: 'Failed to create user account',
-          details: process.env.NODE_ENV === 'development' ? createError.message : undefined
-        });
-      }
+      const result = await excelStorage.createUser({
+        email,
+        password_hash: passwordHash,
+        username
+      });
 
       if (!result || !result.success) {
         return res.status(409).json({ 
@@ -60,7 +46,6 @@ class AuthController {
 
       // Generate JWT token
       if (!process.env.JWT_SECRET) {
-        console.error('JWT_SECRET is not set in environment variables');
         return res.status(500).json({ error: 'Server configuration error' });
       }
       
@@ -80,12 +65,9 @@ class AuthController {
         token
       });
     } catch (error) {
-      console.error('Signup error:', error);
-      console.error('Error stack:', error.stack);
       res.status(500).json({ 
         error: 'Failed to create user account',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-        type: error.constructor.name
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }
@@ -113,7 +95,6 @@ class AuthController {
 
       // Generate JWT token
       if (!process.env.JWT_SECRET) {
-        console.error('JWT_SECRET is not set in environment variables');
         return res.status(500).json({ error: 'Server configuration error' });
       }
       
@@ -133,7 +114,6 @@ class AuthController {
         token
       });
     } catch (error) {
-      console.error('Login error:', error);
       res.status(500).json({ 
         error: 'Failed to login',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -160,7 +140,6 @@ class AuthController {
 
       res.json({ message: 'Preferences updated successfully' });
     } catch (error) {
-      console.error('Update preferences error:', error);
       res.status(500).json({ error: 'Failed to update preferences' });
     }
   }
@@ -177,7 +156,6 @@ class AuthController {
 
       res.json({ preferences });
     } catch (error) {
-      console.error('Get preferences error:', error);
       res.status(500).json({ error: 'Failed to get preferences' });
     }
   }

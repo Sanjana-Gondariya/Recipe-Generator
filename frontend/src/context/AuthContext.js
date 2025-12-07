@@ -76,8 +76,6 @@ export const AuthProvider = ({ children }) => {
         };
       }
     } catch (err) {
-      console.error('Signup error details:', err.response?.data || err);
-      
       // Handle network errors
       if (!err.response && err.message) {
         if (err.message.includes('Network Error') || err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK') {

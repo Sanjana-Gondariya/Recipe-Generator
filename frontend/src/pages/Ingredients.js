@@ -25,7 +25,6 @@ function Ingredients() {
       setIngredients(response.data.ingredients || []);
     } catch (err) {
       setError('Failed to load ingredients');
-      console.error('Ingredients error:', err);
     } finally {
       setLoading(false);
     }
@@ -52,7 +51,6 @@ function Ingredients() {
       fetchIngredients();
     } catch (err) {
       setError('Failed to add ingredient');
-      console.error('Add ingredient error:', err);
     } finally {
       setAdding(false);
     }
@@ -68,7 +66,6 @@ function Ingredients() {
       fetchIngredients();
     } catch (err) {
       alert('Failed to remove ingredient');
-      console.error('Remove ingredient error:', err);
     }
   };
 

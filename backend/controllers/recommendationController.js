@@ -95,7 +95,6 @@ class RecommendationController {
         recommendations: recommendations.slice(0, 10)
       });
     } catch (error) {
-      console.error('Get recommendations error:', error);
       res.status(500).json({ error: 'Failed to get recommendations' });
     }
   }

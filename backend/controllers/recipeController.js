@@ -26,8 +26,7 @@ class RecipeController {
         recipes: limitedRecipes
       });
     } catch (error) {
-      console.error('Search recipes error:', error);
-      res.status(500).json({ error: 'Failed to search recipes', details: error.message });
+      res.status(500).json({ error: 'Failed to search recipes' });
     }
   }
 
@@ -45,8 +44,7 @@ class RecipeController {
 
       res.json({ recipe });
     } catch (error) {
-      console.error('Get recipe error:', error);
-      res.status(500).json({ error: 'Failed to get recipe', details: error.message });
+      res.status(500).json({ error: 'Failed to get recipe' });
     }
   }
 
@@ -59,7 +57,6 @@ class RecipeController {
         recipes: recipes
       });
     } catch (error) {
-      console.error('Get all recipes error:', error);
       res.status(500).json({ error: 'Failed to get recipes' });
     }
   }

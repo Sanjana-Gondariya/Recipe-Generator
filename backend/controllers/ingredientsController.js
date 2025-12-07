@@ -11,7 +11,6 @@ class IngredientsController {
         ingredients: ingredients.map(item => item.ingredient)
       });
     } catch (error) {
-      console.error('Get ingredients error:', error);
       res.status(500).json({ error: 'Failed to get ingredients' });
     }
   }
@@ -33,7 +32,6 @@ class IngredientsController {
 
       res.status(201).json({ message: 'Ingredient added successfully' });
     } catch (error) {
-      console.error('Add ingredient error:', error);
       res.status(500).json({ error: 'Failed to add ingredient' });
     }
   }
@@ -55,7 +53,6 @@ class IngredientsController {
 
       res.json({ message: 'Ingredient removed successfully' });
     } catch (error) {
-      console.error('Remove ingredient error:', error);
       res.status(500).json({ error: 'Failed to remove ingredient' });
     }
   }

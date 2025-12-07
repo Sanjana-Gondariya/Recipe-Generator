@@ -22,7 +22,6 @@ router.get('/me', authenticateToken, async (req, res) => {
     }
     res.json({ user: { id: user.id, email: user.email, username: user.username } });
   } catch (error) {
-    console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
   }
 });

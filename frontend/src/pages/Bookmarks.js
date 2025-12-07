@@ -18,7 +18,6 @@ function Bookmarks() {
       setBookmarks(response.data.bookmarks);
     } catch (err) {
       setError('Failed to load bookmarks');
-      console.error('Bookmarks error:', err);
     } finally {
       setLoading(false);
     }

@@ -20,7 +20,7 @@ class RecipeData {
     return new Promise((resolve, reject) => {
       const results = [];
       
-      const csvPath = path.join(__dirname, '../data/RAW_recipes.csv');
+      const csvPath = path.join(__dirname, '../data/recipes.csv');
       
       // Check if file exists
       if (!fs.existsSync(csvPath)) {
@@ -90,7 +90,6 @@ class RecipeData {
           }
         })
         .on('end', () => {
-          console.log(`Loaded ${results.length} recipes`);
           this.recipes = results;
           this.loaded = true;
           resolve();

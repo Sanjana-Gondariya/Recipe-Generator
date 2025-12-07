@@ -38,7 +38,6 @@ function RecipeDetail() {
       setIsBookmarked(response.data.isBookmarked);
     } catch (err) {
       // If user is not logged in, ignore the error
-      console.log('Not logged in or bookmark check failed');
     }
   };
 

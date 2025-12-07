@@ -37,7 +37,7 @@ function RecipeSearch() {
       const response = await api.get('/ingredients');
       setSavedIngredients(response.data.ingredients || []);
     } catch (err) {
-      console.error('Failed to fetch saved ingredients:', err);
+      // Ignore error - user might not be logged in
     }
   };
 
@@ -94,7 +94,6 @@ function RecipeSearch() {
     } catch (err) {
       const errorMessage = err.response?.data?.error || err.response?.data?.details || err.message || 'Failed to search recipes. Please try again.';
       setError(errorMessage);
-      console.error('Search error:', err.response?.data || err);
     } finally {
       setLoading(false);
     }

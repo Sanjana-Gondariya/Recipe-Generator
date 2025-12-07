@@ -26,7 +26,6 @@ class BookmarkController {
 
       res.status(201).json({ message: 'Recipe bookmarked successfully' });
     } catch (error) {
-      console.error('Add bookmark error:', error);
       res.status(500).json({ error: 'Failed to bookmark recipe' });
     }
   }
@@ -44,7 +43,6 @@ class BookmarkController {
 
       res.json({ message: 'Bookmark removed successfully' });
     } catch (error) {
-      console.error('Remove bookmark error:', error);
       res.status(500).json({ error: 'Failed to remove bookmark' });
     }
   }
@@ -83,7 +81,6 @@ class BookmarkController {
         bookmarks: enrichedBookmarks 
       });
     } catch (error) {
-      console.error('Get bookmarks error:', error);
       res.status(500).json({ error: 'Failed to get bookmarks' });
     }
   }
@@ -97,7 +94,6 @@ class BookmarkController {
 
       res.json({ isBookmarked });
     } catch (error) {
-      console.error('Check bookmark error:', error);
       res.status(500).json({ error: 'Failed to check bookmark status' });
     }
   }
